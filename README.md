@@ -94,4 +94,4 @@ link-shortener-platform/
 ¡Las contribuciones son bienvenidas! Por favor haz un fork del repositorio y envía un Pull Request.
 
 ---
-*Creado por [Tu Nombre] - 2025*
+*Creado por ryther - 2025*
