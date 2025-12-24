@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+passlib[argon2]
+python-jose[cryptography]
+python-multipart
+qrcode
+pillow
+shortuuid
+pytest
+httpx
+argon2-cffi
