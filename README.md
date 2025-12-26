@@ -2,7 +2,7 @@
 
 Un servicio moderno y completo para acortar URLs con analíticas detalladas, personalización de enlaces y una interfaz premium responsive. Construido con **FastAPI** (Backend) y **React + Vite** (Frontend).
 
-![Vista Previa](https://via.placeholder.com/800x400?text=Link+Shortener+Dashboard)
+![Vista Previa](dashboard-preview.png)
 
 ## ✨ Características Principales
 
