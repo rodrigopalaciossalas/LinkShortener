@@ -25,9 +25,26 @@ def get_links(db: Session, skip: int = 0, limit: int = 100, user_id: int = None)
     return db.query(Link).offset(skip).limit(limit).all()
 
 def create_user_link(db: Session, link: LinkCreate, user_id: int):
-    # Generate a short code
-    short_code = shortuuid.ShortUUID().random(length=6)
-    db_link = Link(**link.model_dump(), short_code=short_code, owner_id=user_id)
+    # Check if custom short code is provided
+    if link.short_code:
+        # Check availability
+        existing = get_link_by_short_code(db, link.short_code)
+        if existing:
+            raise Exception("Short code already taken") # Simple exception, router should handle HTTPException
+        short_code = link.short_code
+    else:
+        # Generate a random short code
+        short_code = shortuuid.ShortUUID().random(length=6)
+        # Ensure uniqueness (rare edge case)
+        while get_link_by_short_code(db, short_code):
+             short_code = shortuuid.ShortUUID().random(length=6)
+
+    db_link = Link(
+        original_url=link.original_url,
+        title=link.title,
+        short_code=short_code,
+        owner_id=user_id
+    )
     db.add(db_link)
     db.commit()
     db.refresh(db_link)

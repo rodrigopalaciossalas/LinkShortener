@@ -11,3 +11,5 @@ shortuuid
 pytest
 httpx
 argon2-cffi
+google-auth
+requests

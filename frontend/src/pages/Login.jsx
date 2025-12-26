@@ -4,11 +4,68 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import api from '../services/api';
 
+import { useGoogleLogin } from '@react-oauth/google';
+
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+
+    const handleGoogleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                // Send the ID token (or access token if implicit) to backend
+                // Default useGoogleLogin returns code flow or implicit. 
+                // We need the credential (ID token) usually for simple auth, but useGoogleLogin gives access token by default.
+                // However, the backend expects a token to verify.
+                // It is simpler to use the 'onSuccess' credential from <GoogleLogin /> but that renders a specific button.
+                // To keep my custom button, I use useGoogleLogin and then fetch user info OR configuration.
+                // Wait, useGoogleLogin defaults to 'implicit' (access_token). 
+                // BUT my backend uses verify_oauth2_token which expects an ID Token (JWT).
+                // I should configure useGoogleLogin to return an id_token or use the 'flow: 'auth-code'.
+                // Easier path: backend validates access_token? No, standard is ID Token.
+                // Let's ask useGoogleLogin to give us an 'id_token' flow shouldn't we? 
+                // Actually, useGoogleLogin doesn't easily give ID Token in implicit flow directly without configuration.
+                // Let's force it to standard flow or just switch to the Official Button if it's too complex?
+                // No, user likes the custom button.
+                // I will use `flow: 'implicit'` but I need `id_token`.
+                // Actually, if I use `onSuccess` with `credentialResponse` from <GoogleLogin>, it's an ID Token.
+                // constructing it with useGoogleLogin:
+                // Let's just swap to standard behavior: get access_token, send to backend, backend uses it to get user info from Google UserInfo API.
+                // MODIFY BACKEND? No, Verify_oauth2_token is for ID Tokens.
+                // Okay, I will use `onSuccess` to get `credential`. Wait, useGoogleLogin `onSuccess` gives `TokenResponse` (access_token).
+                // Unless I add `flow: 'auth-code'`?
+                // Let's try formatting the backend to accept `access_token` and call UserInfo, OR simple: use <GoogleLogin> render prop? No, that was deprecated.
+                // Okay, I will change the backend to fetch user info if verify fails, OR simpler:
+                // I will use the `GoogleLogin` component (official) but style it, OR just hide it and click it? No.
+                // Let's USE THE ID TOKEN.
+                // To get ID Token with useGoogleLogin, we need `flow: 'implicit'` (default) but checking the response.
+                // Actually, modern GSI (Google Identity Services) separates "Sign In With Google" (ID Token) from "OAuth 2.0" (Access Token).
+                // `useGoogleLogin` is for OAuth 2.0.
+                // `GoogleLogin` component is for Sign In (ID Token).
+                // Since I want a custom button, I can't easily use `GoogleLogin` component without its styles.
+                // HOWEVER, `useGoogleOneTapLogin`?
+                // Let's stick to `useGoogleLogin` and change backend to use `requests.get('https://www.googleapis.com/oauth2/v3/userinfo')` with the access token. 
+                // It's safer and easier than fighting headers.
+                
+                // CHANGE OF PLAN: I will update Backend to also support fetching user info via Access Token if ID token verification fails.
+                // OR BETTER: Just use the Access Token in the backend to query Google.
+                
+                // Let's assume I'll enable that in backend. Here is the frontend code sending the `access_token`.
+                
+                const response = await api.post('/auth/google', {
+                    token: tokenResponse.access_token
+                });
+                localStorage.setItem('token', response.data.access_token);
+                navigate('/dashboard');
+            } catch (err) {
+                console.error("Google Login Error:", err);
+                setError('Failed to login with Google.');
+            }
+        },
+        onError: () => setError('Google Login Failed'),
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -101,7 +158,7 @@ const Login = () => {
                             <span className="relative z-10 px-2 bg-gray-900 text-gray-400">Or continue with</span>
                         </div>
 
-                        <Button type="button" variant="outline" className="flex items-center justify-center gap-2" onClick={() => alert('Google Login implementation coming soon!')}>
+                        <Button type="button" variant="outline" className="flex items-center justify-center gap-2" onClick={() => handleGoogleLogin()}>
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

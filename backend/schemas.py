@@ -23,7 +23,7 @@ class LinkBase(BaseModel):
     title: Optional[str] = None
 
 class LinkCreate(LinkBase):
-    pass
+    short_code: Optional[str] = None
 
 class Link(LinkBase):
     id: int
